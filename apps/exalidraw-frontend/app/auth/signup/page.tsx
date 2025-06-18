@@ -4,11 +4,14 @@ import React, { useState } from 'react';
 import { ArrowRight, Github, Mail, Check } from 'lucide-react';
 import Link from 'next/link';
 import { AuthLayout, InputField } from '@/components/AuthLayout';
+import axios from 'axios';
+import { HTTP_URL } from '@repo/backend-common/config';
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -33,11 +36,65 @@ export default function SignUpPage() {
     
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsLoading(false);
-    console.log('Sign up:', formData);
+    try {
+      const response = await axios.post(`${HTTP_URL}/signup`, {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log(formData);
+
+      const data = await response.data;
+      
+      if (response.status===404) {
+        throw new Error(data.mssg || 'Signup failed');
+      }
+      if (response.status===500) {
+        throw new Error(data.mssg || 'Database Error');
+      }
+      if (response.status===409) {
+        throw new Error(data.mssg || 'Try Different Email');
+      }
+
+      // automatically stimulate signin end point and redirect to dashboard page
+
+
+      try{
+        const signinResponse = await axios.post(`${HTTP_URL}/signin`, {
+          email: formData.email,
+          password: formData.password
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              }
+              });
+  
+              if (signinResponse.status === 200 && signinResponse.data.token) {
+                // Store the token in localStorage if remember me is checked
+                  sessionStorage.setItem('token', signinResponse.data.token);
+                
+                
+                // Redirect to home page or dashboard
+                window.location.href = '/dashboard';
+              }
+      }
+      catch(err){
+        console.log(err);
+        alert("error while signing in ")
+      }
+      
+
+
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Signup failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const passwordStrength = (password: string) => {
@@ -86,6 +143,15 @@ export default function SignUpPage() {
             required
           />
         </div>
+
+        <InputField
+          label="Username"
+          type="text"
+          placeholder="jhon_draw"
+          value={formData.username}
+          onChange={(value) => handleInputChange('username', value)}
+          required
+        />
 
         <InputField
           label="Email"
@@ -203,7 +269,7 @@ export default function SignUpPage() {
         <div className="text-center">
           <span className="text-gray-600 dark:text-gray-300">Already have an account? </span>
           <Link
-            href="/signin"
+            href="/auth/signin"
             className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-semibold transition-colors duration-300"
           >
             Sign in

@@ -66,6 +66,7 @@ wss.on("connection", function connection(ws,request){
         //@ts-ignore
         const user =Users.find(x=>x.ws===ws);
         user?.rooms.push(Number(parsedData.roomId))
+        console.log("room joined")
         // ws.send(`welcome to room ${parsedData.roomId}`)
        }
 
@@ -90,20 +91,53 @@ wss.on("connection", function connection(ws,request){
             const roomId =Number(parsedData.roomId);
             const message=parsedData.message;
 
-            await prismaClient.chat.create(
+            const chat = await prismaClient.chat.create(
                 {
                     data: {
                         roomId,
                         userId,
                         message
-                        }
-                        }
-
-            )
+                    }
+                }
+            );
             Users.forEach(user=>{
                 if(user.rooms.includes(roomId)){
-                    user.ws.send(JSON.stringify({type:"chat",message,roomId}))
+                    user.ws.send(JSON.stringify({type:"chat",message,roomId,chatId: chat.id}))
             }})
+        }
+
+        if(parsedData.type === "update_shape") {
+
+            const roomId = Number(parsedData.roomId);
+            const shape = parsedData.shape;
+            console.log(shape)
+       
+            
+            // Broadcast the shape update to all users in the room
+            Users.forEach(user => {
+                if(user.rooms.includes(roomId)) {
+                    user.ws.send(JSON.stringify({
+                        type: "shape_updated",
+                        shape,
+                        roomId
+                    }));
+                }
+            });
+
+            // Persist the shape in the DB via HTTP backend
+            try {
+                await fetch('http://localhost:3001/shape/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'authorization': token },
+                    body: JSON.stringify({
+                        id: shape.id,
+                        roomId: roomId,
+                        shapeData: JSON.stringify(shape)
+                    })
+                });
+            } catch (err) {
+                console.error('Failed to persist shape to DB', err);
+            }
         }
     }
     catch(err){

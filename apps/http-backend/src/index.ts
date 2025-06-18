@@ -7,14 +7,14 @@ import { prismaClient } from "@repo/db/index";
 import { SALT_ROUNDS } from "@repo/backend-common/config";
 import bcrypt from 'bcrypt';
 import { PrismaClientKnownRequestError } from "../../../packages/db/src/generated/prisma/runtime/library";
-
+import cors from 'cors'
 
 
 
 
 const app=express();
 app.use(express.json())
-
+app.use(cors())
 app.post("/signup",async (
     req:Request,
     res:Response
@@ -65,9 +65,9 @@ app.post("/signin",async (
     req:Request,
     res:Response
 )=>{
-    const {username,password,email}=req.body;
-    if(!username || !password||!email){
-        res.json({mssg:"Username and password are required"});
+    const {password,email}=req.body;
+    if( !password||!email){
+        res.json({mssg:"email and password are required"});
         return
     }
    const validation= SignInSchemma.safeParse({email,password});
@@ -153,9 +153,49 @@ res.json(room?.id)
 
 
 })
+
+app.get("/allrooms",middleware,async (req,res)=>{
+    const userId=req.userId;
+    const rooms= await  prismaClient.room.findMany({
+        where:{
+            }
+            })
+
+    const user_rooms=rooms.filter((room)=>{
+        if(room.adminId===userId){
+            return true
+        }
+    })
+            res.json({rooms,
+            user_rooms})
+
+   
+            
+})
   
 
+app.post("/shape/update", middleware, async (req: Request, res: Response) => {
 
+    const { id, roomId, shapeData } = req.body;
+    console.log(id)
+    console.log(shapeData)
+    if (!id || !roomId || !shapeData) {
+        res.status(400).json({ mssg: "id, roomId, and shapeData are required" });
+        return
+    }
+    try {
+        const shape = await prismaClient.chat.upsert({
+            where: { id:Number(id) },
+            update: { message:shapeData },
+            //@ts-ignore
+            create: { userId:req.userId, roomId, message:shapeData }
+        });
+        res.json({ mssg: "Shape updated", shape });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ mssg: "Failed to update shape" });
+    }
+});
 
 app.listen(3001,()=>{
     console.log(`Server is running on port ${3001}`);

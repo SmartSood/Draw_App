@@ -30,9 +30,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }: ThemeP
   // Initialize theme from localStorage or system preference
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('theme') as Theme;
-      const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      setTheme(saved || systemPreference);
+    const saved = localStorage.getItem('theme') as Theme;
+    const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    setTheme(saved || systemPreference);
     } catch (error) {
       console.error('Error accessing localStorage:', error);
       setTheme('light');
@@ -44,13 +44,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }: ThemeP
   useEffect(() => {
     if (mounted) {
       try {
-        const root = window.document.documentElement;
+      const root = window.document.documentElement;
         if (theme === 'dark') {
           root.classList.add('dark');
         } else {
           root.classList.remove('dark');
         }
-        localStorage.setItem('theme', theme);
+      localStorage.setItem('theme', theme);
       } catch (error) {
         console.error('Error updating theme:', error);
       }
