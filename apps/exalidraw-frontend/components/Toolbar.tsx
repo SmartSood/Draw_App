@@ -12,7 +12,8 @@ import {
   Download,
   Palette,
   ChevronDown,
-  Shapes
+  Shapes,
+  Eraser
 } from 'lucide-react';
 import { preRenderedShapes } from '../utils/drawing';
 
@@ -38,6 +39,7 @@ const tools = [
   { id: 'ellipse', icon: Circle, label: 'Ellipse' },
   { id: 'arrow', icon: ArrowRight, label: 'Arrow' },
   { id: 'text', icon: Type, label: 'Text' },
+  { id: 'eraser', icon: Eraser, label: 'Eraser' },
 ];
 
 const colors = [

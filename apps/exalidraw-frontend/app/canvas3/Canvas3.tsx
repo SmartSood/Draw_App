@@ -351,6 +351,29 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
       return;
     }
 
+    if (currentTool === "eraser") {
+      // Find element under cursor
+      const elementToDelete = elements.find(el => isPointInElement({ x, y }, el));
+      console.log("element to delete",elementToDelete)
+      if (elementToDelete) {
+        
+        // Remove element from local state
+        const newElements = elements.filter(el => el.id !== elementToDelete.id);
+        onElementsChange(newElements);
+        
+        // Send delete message to backend
+        if (socket && roomId) {
+          socket.send(JSON.stringify({
+            type: "delete",
+            roomId,
+            elementId: elementToDelete.id,
+            chatId: elementToDelete.chatId
+          }));
+        }
+      }
+      return;
+    }
+
     if (currentTool === "select") {
       // Check for handle first
       const selected = elements.find(el => el.selected);
@@ -785,6 +808,8 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
       setCursor("default");
     } else if (currentTool.startsWith("shape") || ["rectangle","ellipse","arrow"].includes(currentTool)) {
       setCursor("crosshair");
+    } else if (currentTool === "eraser") {
+      setCursor("url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\'><path d=\'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\' fill=\'none\' stroke=\'%23000\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/></svg>') 0 24, pointer");
     } else {
       setCursor("default");
     }

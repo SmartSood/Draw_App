@@ -195,6 +195,24 @@ app.post("/shape/update", middleware, async (req: Request, res: Response) => {
     }
 });
 
+app.delete("/shape/:id", middleware, async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    if (!id) {
+        res.status(400).json({ mssg: "Shape ID is required" });
+        return;
+    }
+
+    try {
+        await prismaClient.chat.delete({
+            where: { id }
+        });
+        res.json({ mssg: "Shape deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ mssg: "Failed to delete shape" });
+    }
+});
+
 app.listen(3001,()=>{
     console.log(`Server is running on port ${3001}`);
 })

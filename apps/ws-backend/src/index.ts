@@ -100,9 +100,14 @@ wss.on("connection", function connection(ws,request){
                     }
                 }
             );
+            const message2=JSON.parse(message as unknown as string)
+            message2.chatId=chat.id;
+            const message3=JSON.stringify(message2)
+            console.log(message3)
+
             Users.forEach(user=>{
                 if(user.rooms.includes(roomId)){
-                    user.ws.send(JSON.stringify({type:"chat",message,roomId,chatId: chat.id}))
+                    user.ws.send(JSON.stringify({type:"chat",message:message3,roomId,chatId: chat.id}))
             }})
         }
 
@@ -139,6 +144,36 @@ wss.on("connection", function connection(ws,request){
                 });
             } catch (err) {
                 console.error('Failed to persist shape to DB', err);
+            }
+        }
+
+        if(parsedData.type === "delete") {
+            const roomId = Number(parsedData.roomId);
+            const elementId = parsedData.elementId;
+            const chatId = parsedData.chatId;
+            console.log(parsedData)
+
+            // Delete the chat from the database
+            try {
+                await prismaClient.chat.delete({
+                    where: {
+                        id: chatId
+                    }
+                });
+
+                // Broadcast the deletion to all users in the room
+                Users.forEach(user => {
+                    if(user.rooms.includes(roomId)) {
+                        user.ws.send(JSON.stringify({
+                            type: "delete",
+                            elementId,
+                            roomId,
+                            chatId
+                        }));
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to delete chat from DB', err);
             }
         }
     }

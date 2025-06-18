@@ -94,9 +94,18 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
+
+      console.log("ws message",message.type)
       if (message.type === "chat") {
+
         const parsedShape = JSON.parse(message.message);
-        setElements(prev => [...prev, parsedShape]);
+       
+        setElements((prev) => {
+         return [...prev, parsedShape]});
+       
+      } else if (message.type === "delete") {
+        // Remove the deleted element
+        setElements(prev => prev.filter(el => el.id !== message.elementId));
       }
     };
 
@@ -140,6 +149,23 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
+      {/* Toolbar */}
+      {toolbarVisible && (
+        <Toolbar
+          currentTool={currentTool}
+          currentColor={currentColor}
+          currentStrokeWidth={currentStrokeWidth}
+          onToolChange={setCurrentTool}
+          onColorChange={setCurrentColor}
+          onStrokeWidthChange={setCurrentStrokeWidth}
+          onUndo={undo}
+          onRedo={redo}
+          onExport={handleExport}
+          canUndo={canUndo}
+          canRedo={canRedo}
+        />
+      )}
+
       {/* Hamburger Button for Sidebar */}
       <button
         className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-white/90 border border-gray-200 shadow hover:bg-gray-100 transition-all"
@@ -246,24 +272,6 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
             </button>
           </div>
           </div>
-        </div>
-      )}
-      {/* Top Toolbar */}
-      {toolbarVisible && (
-        <div className="fixed top-0 left-0 w-full z-50">
-          <Toolbar
-            currentTool={currentTool}
-            currentColor={currentColor}
-            currentStrokeWidth={currentStrokeWidth}
-            onToolChange={setCurrentTool}
-            onColorChange={setCurrentColor}
-            onStrokeWidthChange={setCurrentStrokeWidth}
-            onUndo={undo}
-            onRedo={redo}
-            onExport={handleExport}
-            canUndo={canUndo}
-            canRedo={canRedo}
-          />
         </div>
       )}
       {/* Right Info/Status Panel */}
