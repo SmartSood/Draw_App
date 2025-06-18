@@ -110,16 +110,18 @@ wss.on("connection", function connection(ws,request){
 
             const roomId = Number(parsedData.roomId);
             const shape = parsedData.shape;
-            console.log(shape)
+            console.log(parsedData)
        
-            
+            shape.selected=false;
             // Broadcast the shape update to all users in the room
             Users.forEach(user => {
                 if(user.rooms.includes(roomId)) {
+                   
                     user.ws.send(JSON.stringify({
                         type: "shape_updated",
                         shape,
-                        roomId
+                        roomId,
+                        chatId: parsedData.chatId
                     }));
                 }
             });
@@ -130,7 +132,7 @@ wss.on("connection", function connection(ws,request){
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'authorization': token },
                     body: JSON.stringify({
-                        id: shape.id,
+                        id: parsedData.chatId,
                         roomId: roomId,
                         shapeData: JSON.stringify(shape)
                     })

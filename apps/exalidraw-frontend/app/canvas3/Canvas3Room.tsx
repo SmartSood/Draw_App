@@ -112,7 +112,16 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
       try {
         const res = await axios.get(`${HTTP_URL}/chats/${roomId}`);
         const messages = res.data.messages;
-        const shapes = messages.map((x: any) => JSON.parse(x.message));
+        console.log(res)
+        const shapes = messages.map((x: any) => {
+          const parsedMessage = JSON.parse(x.message);
+          return {
+            ...parsedMessage,
+            chatId: x.id
+          };
+        });
+        
+        console.log(shapes)
         setElements(shapes);
       } catch (err) {
         console.error("Failed to fetch initial shapes", err);

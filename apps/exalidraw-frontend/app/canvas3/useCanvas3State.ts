@@ -20,7 +20,7 @@ export function useCanvas3State({ roomId, socket }: { roomId: string, socket: We
     async function fetchInitial() {
       const res = await axios.get(`${HTTP_URL}/chats/${roomId}`);
       const messages = res.data.messages;
-      const shapes = messages.map((x: { message: string }) => {
+      const shapes = messages.map((x: { message: string, id: number }) => {
         const messageData = JSON.parse(x.message);
         return messageData;
       });

@@ -568,9 +568,11 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     if (isMoving) {
       elements.filter((el: Element) => el.selected).forEach((el: Element) => {
         if (socket && roomId) {
+            console.log(el)
           socket.send(JSON.stringify({
             type: "update_shape",
             roomId,
+            //@ts-ignore
             shape: el,
             chatId: el.chatId || undefined
           }));
@@ -580,6 +582,7 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     if (isResizing) {
       elements.filter((el: Element) => el.selected).forEach((el: Element) => {
         if (socket && roomId) {
+            console.log(el)
           socket.send(JSON.stringify({
             type: "update_shape",
             roomId,
@@ -600,22 +603,12 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     if (currentElement) {
       onElementsChange([...elements, currentElement]);
       if (socket && roomId) {
-        if (currentTool === 'select') {
-          // Send update_shape only when select tool is active
-          socket.send(JSON.stringify({
-            type: "update_shape",
-            roomId,
-            shape: currentElement,
-            chatId: currentElement.chatId || undefined
-          }));
-        } else {
-          // Send chat message for new shapes
-          socket.send(JSON.stringify({
-            type: "chat",
-            roomId,
-            message: JSON.stringify(currentElement)
-          }));
-        }
+        // Always send chat message for new shapes
+        socket.send(JSON.stringify({
+          type: "chat",
+          roomId,
+          message: JSON.stringify(currentElement)
+        }));
       }
     }
     setCurrentElement(null);
