@@ -48,6 +48,7 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
   const [resizeHandle, setResizeHandle] = useState(null);
   const [moveStartPoint, setMoveStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [resizeStartBox, setResizeStartBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [cursor, setCursor] = useState<string>("default");
 
   // Combine refs
   const combinedRef = (node: HTMLCanvasElement) => {
@@ -561,6 +562,20 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
   
       setCurrentElement(updatedElement);
     }
+
+    // Cursor logic for resize handles
+    if (!editingTextId && currentTool === "select") {
+      const handleId = getHandleUnderMouse(mouseX, mouseY);
+      if (handleId) {
+        // Map handleId to cursor
+        let resizeCursor = "nwse-resize";
+        if (handleId === "nw" || handleId === "se") resizeCursor = "nwse-resize";
+        else if (handleId === "ne" || handleId === "sw") resizeCursor = "nesw-resize";
+        setCursor(resizeCursor);
+      } else {
+        setCursor("default");
+      }
+    }
   };
   
 
@@ -747,8 +762,36 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     );
   }
 
+  // Helper to determine if mouse is over a resize handle
+  const getHandleUnderMouse = useCallback((mouseX: number, mouseY: number) => {
+    const [x, y] = screenToWorld(mouseX, mouseY);
+    const selected = elements.find((el: Element) => el.selected);
+    if (selected) {
+      const handle = getResizeHandles(selected).find(h => isPointInHandle({ x, y }, h));
+      return handle ? handle.id : null;
+    }
+    return null;
+  }, [elements, screenToWorld]);
+
+  // Update cursor on tool or editing state change
+  useEffect(() => {
+    if (editingTextId) {
+      setCursor("text");
+    } else if (currentTool === "pen") {
+      setCursor("url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\'><path d=\'M2 22l4-1 12-12-3-3L3 18l-1 4z\' fill=\'%23000\'/></svg>') 0 24, pointer");
+    } else if (currentTool === "text") {
+      setCursor("crosshair");
+    } else if (currentTool === "select") {
+      setCursor("default");
+    } else if (currentTool.startsWith("shape") || ["rectangle","ellipse","arrow"].includes(currentTool)) {
+      setCursor("crosshair");
+    } else {
+      setCursor("default");
+    }
+  }, [currentTool, editingTextId]);
+
   return (
-    <div ref={containerRef} className="fixed inset-0 overflow-hidden" style={{ position: "fixed", zIndex: 0 }}>
+    <div ref={containerRef} className="fixed inset-0 overflow-hidden" style={{ position: "fixed", zIndex: 0, cursor }}>
       <canvas
         ref={combinedRef}
         width={width}
@@ -773,6 +816,8 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
             top: textInputPosition.y,
             transform: `scale(${zoom})`,
             transformOrigin: "top left",
+            zIndex: 10,
+            cursor: "text"
           }}
         />
       )}
