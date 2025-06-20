@@ -1,5 +1,5 @@
 'use client';
-
+import type { AxiosError } from 'axios';
 import React, { useState } from 'react';
 import { ArrowRight, Github, Mail, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -47,7 +47,8 @@ export default function SignInPage() {
       } else {
         setError('Authentication failed. Please try again.');
       }
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<{ mssg?: string }>;
       if (error.response) {
         switch (error.response.status) {
           case 404:
@@ -162,7 +163,7 @@ export default function SignInPage() {
         </div>
 
         <div className="text-center">
-          <span className="text-gray-600 dark:text-gray-300">Don't have an account? </span>
+          <span className="text-gray-600 dark:text-gray-300">Don&#39;t have an account? </span>
           <Link
             href="/auth/signup"
             className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-semibold transition-colors duration-300"

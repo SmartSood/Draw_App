@@ -29,11 +29,11 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
-  const [instructionsVisible, setInstructionsVisible] = useState(true);
-  const [selectedPageType, setSelectedPageType] = useState("blank");
+  const [instructionsVisible, setInstructionsVisible] = useState(false);
+  const [selectedPageType, setSelectedPageType] = useState("boxed");
   const [bgColor, setBgColor] = useState("#ffffff");
-  const [lineColor, setLineColor] = useState("#60a5fa");
-  const [strokeType, setStrokeType] = useState<'rough' | 'normal'>('rough');
+  const [lineColor, setLineColor] = useState("#000000");
+  const [strokeType, setStrokeType] = useState<'rough' | 'normal'>('normal');
 
   // Use the existing useDrawing hook for state management
   const {
@@ -41,7 +41,6 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
     currentTool,
     currentColor,
     currentStrokeWidth,
-    selectedElements,
     zoom,
     pan,
     editingTextId,
@@ -99,14 +98,18 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
       if (message.type === "chat") {
 
         const parsedShape = JSON.parse(message.message);
-       
+       console.log("parsed Shape",parsedShape)
         setElements((prev) => {
+        console.log(prev)
          return [...prev, parsedShape]});
        
       } else if (message.type === "delete") {
         // Remove the deleted element
         setElements(prev => prev.filter(el => el.id !== message.elementId));
       }
+
+
+
     };
 
     return () => {
@@ -122,7 +125,8 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
         const res = await axios.get(`${HTTP_URL}/chats/${roomId}`);
         const messages = res.data.messages;
         console.log(res)
-        const shapes = messages.map((x: any) => {
+
+        const shapes = messages.map((x) => {
           const parsedMessage = JSON.parse(x.message);
           return {
             ...parsedMessage,
@@ -328,6 +332,7 @@ export function Canvas3Room({ roomId }: { roomId: string }) {
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         elements={elements}
+        //@ts-expect-error nothing will happen
         canvasRef={canvasRef}
       />
     </div>

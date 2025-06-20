@@ -90,13 +90,17 @@ wss.on("connection", function connection(ws,request){
         if(parsedData.type ==="chat"){
             const roomId =Number(parsedData.roomId);
             const message=parsedData.message;
+            const pm=await JSON.parse(parsedData.message)
+            const elementId=pm.id
+
 
             const chat = await prismaClient.chat.create(
                 {
                     data: {
                         roomId,
                         userId,
-                        message
+                        message,
+                        elementId
                     }
                 }
             );
@@ -152,6 +156,7 @@ wss.on("connection", function connection(ws,request){
             const elementId = parsedData.elementId;
             const chatId = parsedData.chatId;
             console.log(parsedData)
+            if(chatId){
 
             // Delete the chat from the database
             try {
@@ -175,6 +180,32 @@ wss.on("connection", function connection(ws,request){
             } catch (err) {
                 console.error('Failed to delete chat from DB', err);
             }
+        }
+        else{
+            try {
+                await prismaClient.chat.delete({
+                    where: {
+                        elementId: elementId
+                    }
+                });
+
+                // Broadcast the deletion to all users in the room
+                Users.forEach(user => {
+                    if(user.rooms.includes(roomId)) {
+                        user.ws.send(JSON.stringify({
+                            type: "delete",
+                            elementId,
+                            roomId,
+                            chatId
+                        }));
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to delete chat from DB', err);
+            }
+            
+
+        }
         }
     }
     catch(err){

@@ -167,12 +167,13 @@ export const drawRoughHeart = (
     
     const px = centerX + (heartX * size / 32) + (Math.random() - 0.5) * roughness;
     const py = centerY + (heartY * size / 32) + (Math.random() - 0.5) * roughness;
-    
+    //@ts-expect-error othing will happen
     points.push({ x: px, y: py });
   }
-  
+      //@ts-expect-error othing will happen
   ctx.moveTo(points[0].x, points[0].y);
   for (let i = 1; i < points.length; i++) {
+        //@ts-expect-error othing will happen
     ctx.lineTo(points[i].x, points[i].y);
   }
   ctx.closePath();

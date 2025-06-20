@@ -1,4 +1,5 @@
 'use client';
+import { AxiosError } from 'axios';
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -32,7 +33,7 @@ export default function DashboardPage() {
   const [newRoomName, setNewRoomName] = useState('');
   const [joinRoomName, setJoinRoomName] = useState('');
   const [userRooms, setuserRooms] = useState<Room[]>([]);
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
+  const [, setFilteredRooms] = useState<Room[]>([]);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,7 +68,8 @@ export default function DashboardPage() {
 
       setRooms(response.data.rooms);
       setuserRooms(response.data.user_rooms);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as AxiosError<{ mssg?: string }>;
       if (error.response?.status === 401) {
         window.location.href = '/auth/signin';
       } else {
@@ -101,6 +103,7 @@ export default function DashboardPage() {
       setNewRoomName('');
     } catch (error) {
       setError('Failed to create room. Please try again.');
+      console.log(error)
     }
   };
 
@@ -310,9 +313,9 @@ export default function DashboardPage() {
             <div className="flex justify-center items-center h-64">
               <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : filteredRooms && filteredRooms.length > 0 ? (
+          ) : userRooms && userRooms.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredRooms.map((room) => (
+              {userRooms.map((room) => (
                 <div
                   key={room.id}
                   className="group bg-white dark:bg-gray-700 rounded-2xl p-6 border-2 border-gray-200 dark:border-gray-600 hover:border-purple-500 dark:hover:border-purple-400 hover:shadow-xl transition-all duration-300"

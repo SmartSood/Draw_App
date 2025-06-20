@@ -207,7 +207,9 @@ export function LandingPage(){
 
           <div className={`transition-all duration-1200 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
-              <button className="group bg-gradient-to-r from-purple-500 to-blue-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3">
+              <button onClick={()=>{
+                window.open('/dashboard')
+              }} className="group bg-gradient-to-r from-purple-500 to-blue-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3">
                 <span>Start Drawing</span>
                 <Mouse className="w-5 h-5 group-hover:animate-bounce" />
               </button>
@@ -331,7 +333,7 @@ export function LandingPage(){
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
                 From quick sketches to complex diagrams, Exalidraw adapts to your workflow. 
-                Whether you're brainstorming ideas, creating flowcharts, or collaborating with your team, 
+                {"Whether you're brainstorming ideas, creating flowcharts, or collaborating with your team, "}
                 our intuitive interface makes it effortless.
               </p>
               <div className="space-y-4">
@@ -442,19 +444,23 @@ export function LandingPage(){
             Ready to Start Creating?
           </h2>
           <p className="text-xl text-purple-100 mb-12 max-w-2xl mx-auto">
-            Join millions of users who love sketching with Exalidraw. 
-            It's free, open-source, and works right in your browser.
+           {"Join millions of users who love sketching with Exalidraw. "}
+           {" It's free, open-source, and works right in your browser."}
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <button className="group bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3">
+            <button onClick={()=>{
+              window.open('/dashboard', '_blank')
+            }} className="group bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-3">
               <span>Launch Exalidraw</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
             </button>
             
-            <button className="group text-white px-8 py-4 rounded-full text-lg font-semibold border-2 border-white/30 hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center space-x-3">
+            <button onClick={()=>{
+                window.open('https://github.com/SmartSood/Draw_App', '_blank');
+              }} className="group text-white px-8 py-4 rounded-full text-lg font-semibold border-2 border-white/30 hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center space-x-3">
               <Github className="w-5 h-5" />
-              <span>View Source</span>
+              <span >View Source</span>
             </button>
           </div>
         </div>
@@ -481,7 +487,7 @@ export function LandingPage(){
               <span className="text-gray-500 flex items-center space-x-2">
                 <span>Made with</span>
                 <Heart className="w-4 h-4 text-red-500 animate-pulse" />
-                <span>by the community</span>
+                <span>Smarth Sood</span>
               </span>
             </div>
           </div>

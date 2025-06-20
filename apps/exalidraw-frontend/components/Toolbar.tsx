@@ -44,10 +44,10 @@ const tools = [
 
 const colors = [
   '#000000', '#e74c3c', '#3498db', '#2ecc71', 
-  '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'
+  '#f39c12', '#9b59b6', '#1abc9c', '#e67e22',"#FFFFFF"
 ];
 
-const strokeWidths = [1, 2, 4, 8];
+const strokeWidths = [1, 2, 4, 8,10];
 
 export const Toolbar: React.FC<ToolbarProps> = ({
   currentTool,

@@ -19,6 +19,7 @@ export interface Point {
     customShape?: string;
     chatId?: number;
   }
+
   
   export interface DrawingState {
     elements: Element[];
@@ -35,7 +36,7 @@ export interface Point {
     editingTextId: string | null;
   }
   
-  export interface CanvasProps {
+  export type CanvasProps = {
     width: number;
     height: number;
     elements: Element[];
@@ -43,16 +44,20 @@ export interface Point {
     currentColor: string;
     currentStrokeWidth: number;
     onElementsChange: (elements: Element[]) => void;
-    onSelectionChange: (selectedIds: string[]) => void;
+    onSelectionChange: (ids: string[]) => void;
     zoom: number;
-    pan: Point;
+    pan: { x: number; y: number };
     onZoomChange: (zoom: number) => void;
-    onPanChange: (pan: Point) => void;
+    onPanChange: (pan: { x: number; y: number }) => void;
     editingTextId: string | null;
     onEditingTextChange: (id: string | null) => void;
     socket: WebSocket | null;
     roomId: string;
-  }
+    strokeType: string;
+    selectedPageType: string;
+    bgColor: string;
+    lineColor: string;
+  };
   
   export interface PreRenderedShape {
     id: string;

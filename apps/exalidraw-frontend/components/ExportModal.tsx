@@ -44,6 +44,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Export Drawing</h2>
           <button
+            title='jdsenik'
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg"
           >

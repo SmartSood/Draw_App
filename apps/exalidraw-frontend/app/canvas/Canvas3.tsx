@@ -1,16 +1,16 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Element, Point } from "@/types/drawing";
 import { drawRoughLine, drawRoughRectangle, drawRoughEllipse, drawArrow, drawRoughStar, drawRoughHeart, drawRoughTriangle, drawRoughHexagon, drawRoughDiamond, isPointInElement, getBoundingBox } from "@/utils/drawing";
+import { CanvasProps } from "@/types/drawing";
 
-const CANVAS_SIZE = 10000;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 10;
 const ZOOM_SENSITIVITY = 0.01;
-const PAN_SPEED = 1.5;
+
 const HANDLE_SIZE = 8;
 
 // Accept all relevant props for collaborative drawing
-export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
+export const Canvas3 = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
   width,
   height,
   elements,
@@ -40,12 +40,12 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState<Point | null>(null);
-  const [selectedElements, setSelectedElements] = useState<string[]>([]);
+  const [, setSelectedElements] = useState<string[]>([]);
   const [textInputPosition, setTextInputPosition] = useState<Point | null>(null);
   const [textInputValue, setTextInputValue] = useState("");
   const [isMoving, setIsMoving] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [resizeHandle, setResizeHandle] = useState(null);
+  const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [moveStartPoint, setMoveStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [resizeStartBox, setResizeStartBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [cursor, setCursor] = useState<string>("default");
@@ -73,6 +73,7 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
       y * zoom + pan.y
     ];
   }, [pan, zoom]);
+  
 
   const clampCamera = useCallback(() => {
     if (!containerRef.current || !canvasRef.current) return;
@@ -266,7 +267,7 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
       ctx.strokeStyle = gridLineColor;
       ctx.lineWidth = 1 / zoom;
       // Draw horizontal lines
-      let startY = Math.floor(visibleTop / gridGap) * gridGap;
+      const startY = Math.floor(visibleTop / gridGap) * gridGap;
       for (let y = startY; y < visibleBottom; y += gridGap) {
         ctx.beginPath();
         ctx.moveTo(visibleLeft, y);
@@ -278,7 +279,7 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
       ctx.strokeStyle = gridLineColor;
       ctx.lineWidth = 1 / zoom;
       // Draw vertical lines
-      let startX = Math.floor(visibleLeft / gridGap) * gridGap;
+      const startX = Math.floor(visibleLeft / gridGap) * gridGap;
       for (let x = startX; x < visibleRight; x += gridGap) {
         ctx.beginPath();
         ctx.moveTo(x, visibleTop);
@@ -298,7 +299,10 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     renderBackground(ctx);
     ctx.save();
     ctx.setTransform(zoom, 0, 0, zoom, pan.x, pan.y);
-
+    console.log("element")
+    console.log(elements[elements.length-1])
+    console.log(elements[elements.length-2])
+    console.log(elements[elements.length-3])
     elements.forEach((element: Element) => {
       drawElement(ctx, element);
       if (element.selected) {
@@ -338,155 +342,7 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     render();
   }, [render]);
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const [x, y] = screenToWorld(mouseX, mouseY);
-
-    if (e.button === 1) {
-      setIsPanning(true);
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-      return;
-    }
-
-    if (currentTool === "eraser") {
-      // Find element under cursor
-      const elementToDelete = elements.find(el => isPointInElement({ x, y }, el));
-      console.log("element to delete",elementToDelete)
-      if (elementToDelete) {
-        
-        // Remove element from local state
-        const newElements = elements.filter(el => el.id !== elementToDelete.id);
-        onElementsChange(newElements);
-        
-        // Send delete message to backend
-        if (socket && roomId) {
-          socket.send(JSON.stringify({
-            type: "delete",
-            roomId,
-            elementId: elementToDelete.id,
-            chatId: elementToDelete.chatId
-          }));
-        }
-      }
-      return;
-    }
-
-    if (currentTool === "select") {
-      // Check for handle first
-      const selected = elements.find(el => el.selected);
-      if (selected) {
-        const handle = getResizeHandles(selected).find(h => isPointInHandle({ x, y }, h));
-        if (handle) {
-          setIsResizing(true);
-          setResizeHandle(handle.id);
-          setResizeStartBox({ ...selected });
-          setMoveStartPoint({ x, y });
-          return;
-        }
-      }
-      // Check for shape selection
-      const clicked = elements.find(el => isPointInElement({ x, y }, el));
-      if (clicked) {
-        setSelectedElements([clicked.id]);
-        onSelectionChange([clicked.id]);
-        onElementsChange(elements.map(el => ({ ...el, selected: el.id === clicked.id })));
-        setIsMoving(true);
-        setMoveStartPoint({ x, y });
-      } else {
-        setSelectedElements([]);
-        onSelectionChange([]);
-        onElementsChange(elements.map(el => ({ ...el, selected: false })));
-      }
-      return;
-    }
-
-    if (e.button === 0) {
-      setIsDrawing(true);
-      setStartPoint({ x, y });
-      let newElement: Element = {
-        id: Math.random().toString(36).substr(2, 9),
-        type: currentTool,
-        points: [{ x, y }],
-        color: currentColor,
-        strokeWidth: currentStrokeWidth,
-      };
-      if (currentTool.startsWith("shape-")) {
-        const shapeId = currentTool.replace("shape-", "");
-        newElement = {
-          ...newElement,
-          type: "shape",
-          customShape: shapeId,
-          x,
-          y,
-          width: 0,
-          height: 0,
-        };
-      } else if (
-        currentTool === "rectangle" ||
-        currentTool === "ellipse"
-      ) {
-        newElement = {
-          ...newElement,
-          x,
-          y,
-          width: 0,
-          height: 0,
-        };
-      }
-      setCurrentElement(newElement);
-    }
-
-    if (currentTool === "text") {
-      // Convert mouse to world coordinates
-      const [x, y] = screenToWorld(mouseX, mouseY);
-
-      // Check if clicking on an existing text element
-      const clickedTextElement = elements.find(
-        (el: Element) => el.type === "text" && isPointInElement({ x, y }, el)
-      );
-
-      if (clickedTextElement) {
-        // Edit existing text
-        onEditingTextChange(clickedTextElement.id);
-        setTextInputValue(clickedTextElement.text || "");
-        const [screenX, screenY] = worldToScreen(clickedTextElement.x || x, clickedTextElement.y || y);
-        setTextInputPosition({ x: screenX, y: screenY });
-        setTimeout(() => {
-          if (textInputRef.current) {
-            textInputRef.current.focus();
-            textInputRef.current.select();
-          }
-        }, 0);
-      } else {
-        // Create new text element
-        const newElement: Element = {
-          id: Math.random().toString(36).substr(2, 9),
-          type: "text",
-          points: [{ x, y }],
-          color: currentColor,
-          strokeWidth: currentStrokeWidth,
-          fontSize: 16,
-          text: "",
-          x,
-          y,
-        };
-        onElementsChange([...elements, newElement]);
-        onEditingTextChange(newElement.id);
-        setTextInputValue("");
-        const [screenX, screenY] = worldToScreen(x, y);
-        setTextInputPosition({ x: screenX, y: screenY });
-        setTimeout(() => {
-          if (textInputRef.current) {
-            textInputRef.current.focus();
-          }
-        }, 0);
-      }
-      return;
-    }
-  };
+  
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
@@ -600,7 +456,162 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
       }
     }
   };
-  
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const [x, y] = screenToWorld(mouseX, mouseY);
+
+    if (e.button === 1) {
+      setIsPanning(true);
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
+    if (currentTool === "eraser") {
+      // Find element under cursor
+      const elementToDelete = elements.find(el => isPointInElement({ x, y }, el));
+      console.log("element to delete",elementToDelete)
+      if (elementToDelete) {
+        
+        // Remove element from local state
+        const newElements = elements.filter(el => el.id !== elementToDelete.id);
+        onElementsChange(newElements);
+        
+        // Send delete message to backend
+        if (socket && roomId) {
+          socket.send(JSON.stringify({
+            type: "delete",
+            roomId,
+            elementId: elementToDelete.id,
+            chatId: elementToDelete.chatId
+          }));
+        }
+      }
+      return;
+    }
+
+    if (currentTool === "select") {
+      // Check for handle first
+      const selected = elements.find(el => el.selected);
+      if (selected) {
+        const handle = getResizeHandles(selected).find(h => isPointInHandle({ x, y }, h));
+        if (handle) {
+          setIsResizing(true);
+          setResizeHandle(handle.id);
+          // setResizeStartBox({ ...selected });
+          setResizeStartBox({
+            x: selected.x ?? 0,
+            y: selected.y ?? 0,
+            width: selected.width ?? 0,
+            height: selected.height ?? 0,
+          });
+          setMoveStartPoint({ x, y });
+          return;
+        }
+      }
+      // Check for shape selection
+      const clicked = elements.find(el => isPointInElement({ x, y }, el));
+      if (clicked) {
+        setSelectedElements([clicked.id]);
+        onSelectionChange([clicked.id]);
+        onElementsChange(elements.map(el => ({ ...el, selected: el.id === clicked.id })));
+        setIsMoving(true);
+        setMoveStartPoint({ x, y });
+      } else {
+        setSelectedElements([]);
+        onSelectionChange([]);
+        onElementsChange(elements.map(el => ({ ...el, selected: false })));
+      }
+      return;
+    }
+
+    if (e.button === 0) {
+      setIsDrawing(true);
+      setStartPoint({ x, y });
+      let newElement: Element = {
+        id: Math.random().toString(36).substr(2, 9),
+        //@ts-expect-error  nothing will happen
+        type: currentTool,
+        points: [{ x, y }],
+        color: currentColor,
+        strokeWidth: currentStrokeWidth,
+      };
+      if (currentTool.startsWith("shape-")) {
+        const shapeId = currentTool.replace("shape-", "");
+        newElement = {
+          ...newElement,
+          type: "shape",
+          customShape: shapeId,
+          x,
+          y,
+          width: 0,
+          height: 0,
+        };
+      } else if (
+        currentTool === "rectangle" ||
+        currentTool === "ellipse"
+      ) {
+        newElement = {
+          ...newElement,
+          x,
+          y,
+          width: 0,
+          height: 0,
+        };
+      }
+      setCurrentElement(newElement);
+    }
+
+    if (currentTool === "text") {
+      // Convert mouse to world coordinates
+      const [x, y] = screenToWorld(mouseX, mouseY);
+
+      // Check if clicking on an existing text element
+      const clickedTextElement = elements.find(
+        (el: Element) => el.type === "text" && isPointInElement({ x, y }, el)
+      );
+
+      if (clickedTextElement) {
+        // Edit existing text
+        onEditingTextChange(clickedTextElement.id);
+        setTextInputValue(clickedTextElement.text || "");
+        const [screenX, screenY] = worldToScreen(clickedTextElement.x || x, clickedTextElement.y || y);
+        setTextInputPosition({ x: screenX, y: screenY });
+        setTimeout(() => {
+          if (textInputRef.current) {
+            textInputRef.current.focus();
+            textInputRef.current.select();
+          }
+        }, 0);
+      } else {
+        // Create new text element
+        const newElement: Element = {
+          id: Math.random().toString(36).substr(2, 9),
+          type: "text",
+          points: [{ x, y }],
+          color: currentColor,
+          strokeWidth: currentStrokeWidth,
+          fontSize: 16,
+          text: "",
+          x,
+          y,
+        };
+        onElementsChange([...elements, newElement]);
+        onEditingTextChange(newElement.id);
+        setTextInputValue("");
+        const [screenX, screenY] = worldToScreen(x, y);
+        setTextInputPosition({ x: screenX, y: screenY });
+        setTimeout(() => {
+          if (textInputRef.current) {
+            textInputRef.current.focus();
+          }
+        }, 0);
+      }
+      return;
+    }
+  };
 
   const handleMouseUp = () => {
     if (isMoving) {
@@ -610,7 +621,6 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
           socket.send(JSON.stringify({
             type: "update_shape",
             roomId,
-            //@ts-ignore
             shape: el,
             chatId: el.chatId || undefined
           }));
@@ -653,37 +663,37 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     setStartPoint(null);
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current) return;
-    e.preventDefault();
+  // const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+  //   if (!canvasRef.current) return;
+  //   e.preventDefault();
   
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+  //   const rect = canvasRef.current.getBoundingClientRect();
+  //   const mouseX = e.clientX - rect.left;
+  //   const mouseY = e.clientY - rect.top;
   
-    if (e.ctrlKey || e.metaKey) {
-      // Zoom
-      const zoomChange = -e.deltaY * ZOOM_SENSITIVITY;
-      const newZoom = Math.min(Math.max(zoom * (1 + zoomChange), MIN_ZOOM), MAX_ZOOM);
-      const scaleRatio = newZoom / zoom;
+  //   if (e.ctrlKey || e.metaKey) {
+  //     // Zoom
+  //     const zoomChange = -e.deltaY * ZOOM_SENSITIVITY;
+  //     const newZoom = Math.min(Math.max(zoom * (1 + zoomChange), MIN_ZOOM), MAX_ZOOM);
+  //     const scaleRatio = newZoom / zoom;
   
-      // Adjust offset to keep zoom centered on cursor
-      const offsetX = mouseX - (mouseX - pan.x) * scaleRatio;
-      const offsetY = mouseY - (mouseY - pan.y) * scaleRatio;
+  //     // Adjust offset to keep zoom centered on cursor
+  //     const offsetX = mouseX - (mouseX - pan.x) * scaleRatio;
+  //     const offsetY = mouseY - (mouseY - pan.y) * scaleRatio;
   
-      onZoomChange(newZoom);
-      onPanChange({ x: offsetX, y: offsetY });
-    } else {
-      // Pan
-      const PAN_SPEED = 1.5;
-      onPanChange({
-        x: pan.x - e.deltaX * PAN_SPEED,
-        y: pan.y - e.deltaY * PAN_SPEED,
-      });
-    }
+  //     onZoomChange(newZoom);
+  //     onPanChange({ x: offsetX, y: offsetY });
+  //   } else {
+  //     // Pan
+  //     const PAN_SPEED = 1.5;
+  //     onPanChange({
+  //       x: pan.x - e.deltaX * PAN_SPEED,
+  //       y: pan.y - e.deltaY * PAN_SPEED,
+  //     });
+  //   }
   
-    setTimeout(clampCamera, 0);
-  };
+  //   setTimeout(clampCamera, 0);
+  // };
   
 
   const handleTextInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -849,3 +859,4 @@ export const Canvas3 = React.forwardRef<HTMLCanvasElement, any>(({
     </div>
   );
 }); 
+Canvas3.displayName = "Canvas3";

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { ThemeToggle } from './Theme/ThemeToggle';
 
 interface AuthLayoutProps {
   children: React.ReactNode;

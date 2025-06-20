@@ -1,5 +1,14 @@
 import React from "react";
 
+interface Toolbar3Props {
+  currentTool: string;
+  currentColor: string;
+  currentStrokeWidth: number;
+  onToolChange: (tool: string) => void;
+  onColorChange: (color: string) => void;
+  onStrokeWidthChange: (width: number) => void;
+}
+
 export function Toolbar3({
   currentTool,
   currentColor,
@@ -7,7 +16,7 @@ export function Toolbar3({
   onToolChange,
   onColorChange,
   onStrokeWidthChange
-}: any) {
+}: Toolbar3Props) {
   return (
     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex gap-4 px-6 py-3 rounded-2xl shadow-xl bg-white/60 backdrop-blur-xl border border-white/30">
       {/* Tool buttons */}
