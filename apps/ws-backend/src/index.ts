@@ -2,6 +2,7 @@ import WebSocket from "ws";
 import jwt from "jsonwebtoken"
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { prismaClient } from "@repo/db/index";
+import { HTTP_URL } from "@repo/backend-common/config";
 
 const wss = new WebSocket.Server({ port: 8080 });
 
@@ -137,7 +138,7 @@ wss.on("connection", function connection(ws,request){
 
             // Persist the shape in the DB via HTTP backend
             try {
-                await fetch('http://localhost:3001/shape/update', {
+                await fetch(`${HTTP_URL}/shape/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'authorization': token },
                     body: JSON.stringify({

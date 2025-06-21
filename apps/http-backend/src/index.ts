@@ -15,7 +15,7 @@ import cors from 'cors'
 const app=express();
 app.use(express.json())
 app.use(cors())
-app.post("/signup",async (
+app.post("/api/signup",async (
     req:Request,
     res:Response
 )=>{
@@ -61,7 +61,7 @@ app.post("/signup",async (
 })
 
 
-app.post("/signin",async (
+app.post("/api/signin",async (
     req:Request,
     res:Response
 )=>{
@@ -95,7 +95,7 @@ app.post("/signin",async (
 
 
 
-app.post("/createRoom", middleware, (req: Request, res: Response) => {
+app.post("/api/createRoom", middleware, (req: Request, res: Response) => {
     const roomName  = req.body.roomName;
 
     const AuthorId=req.userId
@@ -124,7 +124,7 @@ app.post("/createRoom", middleware, (req: Request, res: Response) => {
     })
 })
 
-app.get("/chats/:roomId",async (req,res)=>{
+app.get("/api/chats/:roomId",async (req,res)=>{
     const roomId=Number(req.params.roomId)
   const messages= await  prismaClient.chat.findMany({
     where:{
@@ -139,7 +139,7 @@ app.get("/chats/:roomId",async (req,res)=>{
 
 })
 
-app.get("/room/:slug",async (req,res)=>{
+app.get("/api/room/:slug",async (req,res)=>{
     const slug=req.params.slug
   const room= await  prismaClient.room.findFirst({
     where:{
@@ -152,7 +152,7 @@ res.json(room?.id)
 
 })
 
-app.get("/allrooms",middleware,async (req,res)=>{
+app.get("/api/allrooms",middleware,async (req,res)=>{
     const userId=req.userId;
     const rooms= await  prismaClient.room.findMany({
         where:{
@@ -172,7 +172,7 @@ app.get("/allrooms",middleware,async (req,res)=>{
 })
   
 
-app.post("/shape/update", middleware, async (req: Request, res: Response) => {
+app.post("/api/shape/update", middleware, async (req: Request, res: Response) => {
 
     const { id, roomId, shapeData } = req.body;
     console.log(id)
@@ -195,7 +195,7 @@ app.post("/shape/update", middleware, async (req: Request, res: Response) => {
     }
 });
 
-app.delete("/shape/:id", middleware, async (req: Request, res: Response) => {
+app.delete("/api/shape/:id", middleware, async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     if (!id) {
         res.status(400).json({ mssg: "Shape ID is required" });
